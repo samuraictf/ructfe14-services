@@ -160,7 +160,7 @@ int try_match_rec(char **a1, char * a2, signed int a3, char *a4)
 }
 
 //----- (080495B0) --------------------------------------------------------
-signed int try_match(char * a1, char * a2)
+int try_match(char * a1, char * a2)
 {
   return try_match_rec(root, a1, 0, a2);
 }
@@ -272,35 +272,13 @@ void  run(int port)
   int v6; // edx@37
   char *v7; // esi@39
   size_t v8; // ecx@39
-  size_t v11; // eax@68
-  size_t v13; // eax@77
-  int v14; // eax@82
   char *v15; // [sp+0h] [bp-24254h]@82
-  int v16; // [sp+4h] [bp-24250h]@4
-  int v20; // [sp+1Ch] [bp-24238h]@82
-  void *v25; // [sp+30h] [bp-24224h]@77
-  int v35; // [sp+58h] [bp-241FCh]@68
-  void *v36; // [sp+5Ch] [bp-241F8h]@68
-  int v37; // [sp+60h] [bp-241F4h]@66
-  int v38; // [sp+64h] [bp-241F0h]@66
-  char *v42; // [sp+74h] [bp-241E0h]@62
-  int v43; // [sp+78h] [bp-241DCh]@61
-  int v47; // [sp+88h] [bp-241CCh]@58
+  const char *v25; // [sp+30h] [bp-24224h]@77
+  const char *v36; // [sp+5Ch] [bp-241F8h]@68
   void *buf; // [sp+98h] [bp-241BCh]@48
-  int v54; // [sp+A4h] [bp-241B0h]@35
-  int v55; // [sp+A8h] [bp-241ACh]@23
-  int v65; // [sp+D0h] [bp-24184h]@18
-  int v67; // [sp+D8h] [bp-2417Ch]@15
-  int v71; // [sp+E8h] [bp-2416Ch]@12
-  int v74; // [sp+F4h] [bp-24160h]@9
-  int v78; // [sp+104h] [bp-24150h]@7
-  int v79; // [sp+108h] [bp-2414Ch]@7
-  int v80; // [sp+10Ch] [bp-24148h]@7
-  int v81; // [sp+110h] [bp-24144h]@5
-  int v85; // [sp+120h] [bp-24134h]@3
   const char *found_pat; // [sp+138h] [bp-2411Ch]@72
   char *src; // [sp+13Ch] [bp-24118h]@60
-  int v93; // [sp+140h] [bp-24114h]@56
+  int cpid; // [sp+140h] [bp-24114h]@56
   char *space_ptr; // [sp+144h] [bp-24110h]@54
   char *lf_ptr; // [sp+148h] [bp-2410Ch]@46
   socklen_t addr_len; // [sp+14Ch] [bp-24108h]@31
@@ -325,9 +303,7 @@ void  run(int port)
   int optval; // [sp+24234h] [bp-20h]@1
   int v117; // [sp+24238h] [bp-1Ch]@10
   size_t size; // [sp+2423Ch] [bp-18h]@51
-  int v119; // [sp+24240h] [bp-14h]@1
 
-  v119 = port;
   optval = 1;
   server_sock = -1;
   client = -1;
@@ -346,7 +322,7 @@ void  run(int port)
   v2 = init_state(file);
   printf("Loaded %d lines from state file\n", v2);
   make_non_blocking(fileno(file));
-  v78 = setvbuf(file, 0, 2, 0);
+  setvbuf(file, 0, 2, 0);
   server_sock = socket(AF_INET, SOCK_STREAM, 0);
   if ( server_sock < 0 )
   {
@@ -479,13 +455,15 @@ void  run(int port)
                 }
                 else if ( check_alphabet(dest) )
                 {
-                  v93 = fork();
-                  if ( v93 == -1 )
+                  //good indication the vuln is in here so we don't crash server
+                  //but could take over listening socket and kill parent :)
+                  cpid = fork();
+                  if ( cpid == -1 )
                   {
                     perror("fork()");
                     exit(-1);
                   }
-                  if ( !v93 )
+                  if ( !cpid )
                   {
                     src = (char *)malloc(128);
                     memset(src, 0, 0x80u);
@@ -495,14 +473,13 @@ void  run(int port)
                      //send A *******************************...
                      //can have up to 125 *, which replace %s below to make
                      //144 char string into 128 bute buffer
-                      v43 = sprintf(output_buf, "PATTERN MATCHED : %s\n", src);
+                      sprintf(output_buf, "PATTERN MATCHED : %s\n", src);
                     }
                     else
                     {
-                      v42 = strcpy(output_buf, "NO PATTERN MATCHED\n");
+                      strcpy(output_buf, "NO PATTERN MATCHED\n");
                     }
-                    v117 = send(ready_fd, output_buf, strlen(output_buf), 0);
-                    if ( v117 < 0 )
+                    if ( send(ready_fd, output_buf, strlen(output_buf), 0) < 0 )
                       perror("send() failed");
                     free(src);
                     free(output_buf);
