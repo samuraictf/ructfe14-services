@@ -1,0 +1,5 @@
+ -(call)-> Router.__init__(*(<core.Router object at 0xfdbe728c>,), **{})
+ -(call)-> Router.add_route(*(<core.Router object at 0xfdbe728c>, '/', 'apps.index.index'), **{'name': 'index'})
+ -(call)-> Router.add_route(*(<core.Router object at 0xfdbe728c>, '/save', 'apps.index.save'), **{'name': 'save'})
+ -(call)-> Router.add_route(*(<core.Router object at 0xfdbe728c>, '/get', 'apps.index.get'), **{})
+ -(call)-> Router.add_route(*(<core.Router object at 0xfdbe728c>, '/secret', 'apps.test.secret'), **{'name': 'secret'})
