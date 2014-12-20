@@ -93,7 +93,12 @@ def get(req):
         return render('error.html', {'message': "Not Exists!"})
 
     handler = ContentHandler()
-    xml.sax.parse(path, handler)
+
+    parser = xml.sax.make_parser()
+    parser.setContentHandler(handler)
+    parser.setFeature(xml.sax.handler.feature_external_ges, 0)
+    parser.parse(path)
+
     context = dict(name=handler['name'],
                    descr=handler['description'],
                    data=handler['data'])
